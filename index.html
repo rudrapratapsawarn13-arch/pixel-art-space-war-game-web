@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Art Space War - 3D Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #gameContainer {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #handTrackingCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+        }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #0ff;
+            font-size: 14px;
+            font-family: monospace;
+            text-shadow: 0 0 10px #0ff;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .hud-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #0ff;
+            background: rgba(0, 50, 100, 0.3);
+        }
+
+        #weaponMenu {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #0ff;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .weapon-slot {
+            padding: 8px;
+            margin-bottom: 5px;
+            border: 1px solid #0ff;
+            background: rgba(0, 50, 100, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .weapon-slot.active {
+            background: rgba(0, 200, 255, 0.5);
+            box-shadow: 0 0 15px #0ff;
+            border-color: #0f0;
+        }
+
+        #targetInfo {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #f00;
+            font-size: 12px;
+            font-family: monospace;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .target-box {
+            padding: 10px;
+            border: 2px solid #f00;
+            background: rgba(100, 0, 0, 0.3);
+            display: none;
+        }
+
+        .target-box.active {
+            display: block;
+        }
+
+        #debugPanel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #0f0;
+            font-size: 12px;
+            font-family: monospace;
+            background: rgba(0, 50, 0, 0.5);
+            padding: 10px;
+            border: 1px solid #0f0;
+            max-width: 250px;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .debug-line {
+            margin: 3px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="canvas"></canvas>
+        <canvas id="handTrackingCanvas"></canvas>
+
+        <!-- HUD Display -->
+        <div id="hud">
+            <div class="hud-section">
+                <div>⚡ SHIP STATUS</div>
+                <div id="shipHealth">Health: 100/100</div>
+                <div id="shipShield">Shield: 50/50</div>
+            </div>
+            <div class="hud-section">
+                <div>📍 NAVIGATION</div>
+                <div id="position">Pos: 0, 0, 0</div>
+                <div id="velocity">Speed: 0</div>
+            </div>
+            <div class="hud-section">
+                <div>💰 POINTS</div>
+                <div id="points">0</div>
+            </div>
+        </div>
+
+        <!-- Weapon Menu -->
+        <div id="weaponMenu">
+            <div style="margin-bottom: 10px; text-shadow: 0 0 10px #0ff;">⚔️ WEAPONS</div>
+            <div id="weaponSlots"></div>
+        </div>
+
+        <!-- Target Info -->
+        <div id="targetInfo">
+            <div class="target-box" id="targetBox">
+                <div>🎯 TARGET LOCKED</div>
+                <div id="targetName">Enemy Fighter</div>
+                <div id="targetHealth">Health: 50/50</div>
+                <div id="targetDistance">Distance: 100m</div>
+            </div>
+        </div>
+
+        <!-- Debug Panel -->
+        <div id="debugPanel">
+            <div style="margin-bottom: 8px; color: #0ff; text-shadow: 0 0 5px #0ff;">🖐️ HAND TRACKING</div>
+            <div class="debug-line">Left Hand: <span id="debugLeftHand">—</span></div>
+            <div class="debug-line">Right Hand: <span id="debugRightHand">—</span></div>
+            <div class="debug-line">L-Fingers: <span id="debugLeftFingers">0</span></div>
+            <div class="debug-line">R-Fingers: <span id="debugRightFingers">0</span></div>
+            <div class="debug-line">Gesture: <span id="debugGesture">None</span></div>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- MediaPipe Hand Tracking -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+    <!-- Game Scripts -->
+    <script src="js/HandTracker.js"></script>
+    <script src="js/SolarSystem.js"></script>
+    <script src="js/Spaceship.js"></script>
+    <script src="js/Weapon.js"></script>
+    <script src="js/Enemy.js"></script>
+    <script src="js/PlayerController.js"></script>
+    <script src="js/CombatSystem.js"></script>
+    <script src="js/PointsSystem.js"></script>
+    <script src="js/GameManager.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
